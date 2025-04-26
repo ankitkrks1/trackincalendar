@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .crossed-out {
+            position: relative;
+            color: #ef4444;
+        }
+        .crossed-out::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: #ef4444;
+            transform: rotate(-45deg);
+            transform-origin: center;
+        }
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+        .calendar-day:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="bg-indigo-600 text-white p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Task Tracker</h2>
+                <div class="flex space-x-2">
+                    <button id="prev-month" class="p-2 rounded-full hover:bg-indigo-700 transition">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="next-month" class="p-2 rounded-full hover:bg-indigo-700 transition">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="month-year" class="text-xl font-semibold">June 2023</div>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-7 gap-2 mb-4">
+                <div class="text-center font-medium text-gray-500">Sun</div>
+                <div class="text-center font-medium text-gray-500">Mon</div>
+                <div class="text-center font-medium text-gray-500">Tue</div>
+                <div class="text-center font-medium text-gray-500">Wed</div>
+                <div class="text-center font-medium text-gray-500">Thu</div>
+                <div class="text-center font-medium text-gray-500">Fri</div>
+                <div class="text-center font-medium text-gray-500">Sat</div>
+            </div>
+            
+            <div id="calendar-days" class="grid grid-cols-7 gap-2">
+                <!-- Calendar days will be inserted here by JavaScript -->
+            </div>
+            
+            <div class="mt-6 flex justify-between items-center">
+                <div class="text-sm text-gray-600">
+                    <span id="completed-count">0</span> days completed
+                </div>
+                <button id="reset-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    Reset Month
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentDate = new Date();
+            let currentMonth = currentDate.getMonth();
+            let currentYear = currentDate.getFullYear();
+            
+            const monthYearElement = document.getElementById('month-year');
+            const calendarDaysElement = document.getElementById('calendar-days');
+            const prevMonthButton = document.getElementById('prev-month');
+            const nextMonthButton = document.getElementById('next-month');
+            const resetButton = document.getElementById('reset-btn');
+            const completedCountElement = document.getElementById('completed-count');
+            
+            // Load crossed out days from localStorage
+            let crossedDays = JSON.parse(localStorage.getItem('crossedDays')) || {};
+            
+            function updateCalendar() {
+                // Update month/year display
+                const monthNames = ["January", "February", "March", "April", "May", "June",
+                                    "July", "August", "September", "October", "November", "December"];
+                monthYearElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                
+                // Clear previous calendar days
+                calendarDaysElement.innerHTML = '';
+                
+                // Get first day of month and total days in month
+                const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                
+                // Add empty cells for days before the first day of the month
+                for (let i = 0; i < firstDay; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'h-12';
+                    calendarDaysElement.appendChild(emptyDay);
+                }
+                
+                // Add cells for each day of the month
+                let completedDays = 0;
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'calendar-day h-12 flex items-center justify-center rounded-lg cursor-pointer border border-gray-200';
+                    
+                    // Highlight today
+                    const today = new Date();
+                    if (day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                        dayElement.classList.add('bg-blue-100', 'border-blue-300');
+                    }
+                    
+                    dayElement.textContent = day;
+                    
+                    // Check if this day is crossed out
+                    const dateKey = `${currentYear}-${currentMonth}-${day}`;
+                    if (crossedDays[dateKey]) {
+                        dayElement.classList.add('crossed-out');
+                        completedDays++;
+                    }
+                    
+                    // Add click event to cross out day
+                    dayElement.addEventListener('click', function() {
+                        if (dayElement.classList.contains('crossed-out')) {
+                            dayElement.classList.remove('crossed-out');
+                            delete crossedDays[dateKey];
+                            completedDays--;
+                        } else {
+                            dayElement.classList.add('crossed-out');
+                            crossedDays[dateKey] = true;
+                            completedDays++;
+                        }
+                        updateCompletedCount();
+                        saveCrossedDays();
+                    });
+                    
+                    calendarDaysElement.appendChild(dayElement);
+                }
+                
+                updateCompletedCount();
+            }
+            
+            function updateCompletedCount() {
+                completedCountElement.textContent = Object.keys(crossedDays).filter(key => {
+                    const [year, month, day] = key.split('-');
+                    return parseInt(month) === currentMonth && parseInt(year) === currentYear;
+                }).length;
+            }
+            
+            function saveCrossedDays() {
+                localStorage.setItem('crossedDays', JSON.stringify(crossedDays));
+            }
+            
+            // Month navigation
+            prevMonthButton.addEventListener('click', function() {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                updateCalendar();
+            });
+            
+            nextMonthButton.addEventListener('click', function() {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                updateCalendar();
+            });
+            
+            // Reset button
+            resetButton.addEventListener('click', function() {
+                // Remove all crossed days for current month
+                Object.keys(crossedDays).forEach(key => {
+                    const [year, month] = key.split('-');
+                    if (parseInt(month) === currentMonth && parseInt(year) === currentYear) {
+                        delete crossedDays[key];
+                    }
+                });
+                saveCrossedDays();
+                updateCalendar();
+            });
+            
+            // Initialize calendar
+            updateCalendar();
+        });
+    </script>
+</body>
+</html>
