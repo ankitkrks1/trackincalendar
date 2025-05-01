@@ -29,6 +29,9 @@
             transform: scale(1.05);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+        .other-month-day {
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -65,11 +68,16 @@
             
             <div class="mt-6 flex justify-between items-center">
                 <div class="text-sm text-gray-600">
-                    <span id="completed-count">0</span> days completed
+                    <span id="completed-count">0</span> total days completed
                 </div>
-                <button id="reset-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-                    Reset Month
-                </button>
+                <div class="flex space-x-2">
+                    <button id="reset-month-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                        Reset Month
+                    </button>
+                    <button id="reset-all-btn" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
+                        Reset All
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -84,7 +92,8 @@
             const calendarDaysElement = document.getElementById('calendar-days');
             const prevMonthButton = document.getElementById('prev-month');
             const nextMonthButton = document.getElementById('next-month');
-            const resetButton = document.getElementById('reset-btn');
+            const resetMonthButton = document.getElementById('reset-month-btn');
+            const resetAllButton = document.getElementById('reset-all-btn');
             const completedCountElement = document.getElementById('completed-count');
             
             // Load crossed out days from localStorage
@@ -103,18 +112,19 @@
                 const firstDay = new Date(currentYear, currentMonth, 1).getDay();
                 const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
                 
-                // Add empty cells for days before the first day of the month
-                for (let i = 0; i < firstDay; i++) {
-                    const emptyDay = document.createElement('div');
-                    emptyDay.className = 'h-12';
-                    calendarDaysElement.appendChild(emptyDay);
+                // Get days from previous month to display
+                const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+                
+                // Add days from previous month (grayed out)
+                for (let i = firstDay - 1; i >= 0; i--) {
+                    const day = daysInPrevMonth - i;
+                    const dayElement = createDayElement(day, true);
+                    calendarDaysElement.appendChild(dayElement);
                 }
                 
-                // Add cells for each day of the month
-                let completedDays = 0;
+                // Add cells for each day of the current month
                 for (let day = 1; day <= daysInMonth; day++) {
-                    const dayElement = document.createElement('div');
-                    dayElement.className = 'calendar-day h-12 flex items-center justify-center rounded-lg cursor-pointer border border-gray-200';
+                    const dayElement = createDayElement(day, false);
                     
                     // Highlight today
                     const today = new Date();
@@ -122,41 +132,81 @@
                         dayElement.classList.add('bg-blue-100', 'border-blue-300');
                     }
                     
-                    dayElement.textContent = day;
-                    
-                    // Check if this day is crossed out
-                    const dateKey = `${currentYear}-${currentMonth}-${day}`;
-                    if (crossedDays[dateKey]) {
-                        dayElement.classList.add('crossed-out');
-                        completedDays++;
-                    }
-                    
-                    // Add click event to cross out day
-                    dayElement.addEventListener('click', function() {
-                        if (dayElement.classList.contains('crossed-out')) {
-                            dayElement.classList.remove('crossed-out');
-                            delete crossedDays[dateKey];
-                            completedDays--;
-                        } else {
-                            dayElement.classList.add('crossed-out');
-                            crossedDays[dateKey] = true;
-                            completedDays++;
-                        }
-                        updateCompletedCount();
-                        saveCrossedDays();
-                    });
-                    
+                    calendarDaysElement.appendChild(dayElement);
+                }
+                
+                // Calculate how many days from next month to display
+                const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+                const nextMonthDays = totalCells - (firstDay + daysInMonth);
+                
+                // Add days from next month (grayed out)
+                for (let day = 1; day <= nextMonthDays; day++) {
+                    const dayElement = createDayElement(day, true);
                     calendarDaysElement.appendChild(dayElement);
                 }
                 
                 updateCompletedCount();
             }
             
+            function createDayElement(day, isOtherMonth) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day h-12 flex items-center justify-center rounded-lg cursor-pointer border border-gray-200';
+                
+                if (isOtherMonth) {
+                    dayElement.classList.add('other-month-day');
+                }
+                
+                dayElement.textContent = day;
+                
+                // Determine the actual date for this cell
+                let displayYear = currentYear;
+                let displayMonth = currentMonth;
+                let actualDay = day;
+                
+                if (isOtherMonth) {
+                    // If it's a day from previous month
+                    if (day > 20) { // Assuming we wouldn't show more than 20 days from previous month
+                        displayMonth--;
+                        if (displayMonth < 0) {
+                            displayMonth = 11;
+                            displayYear--;
+                        }
+                    } 
+                    // If it's a day from next month
+                    else {
+                        displayMonth++;
+                        if (displayMonth > 11) {
+                            displayMonth = 0;
+                            displayYear++;
+                        }
+                    }
+                }
+                
+                const dateKey = `${displayYear}-${displayMonth}-${actualDay}`;
+                
+                // Check if this day is crossed out
+                if (crossedDays[dateKey]) {
+                    dayElement.classList.add('crossed-out');
+                }
+                
+                // Add click event to cross out day
+                dayElement.addEventListener('click', function() {
+                    if (dayElement.classList.contains('crossed-out')) {
+                        dayElement.classList.remove('crossed-out');
+                        delete crossedDays[dateKey];
+                    } else {
+                        dayElement.classList.add('crossed-out');
+                        crossedDays[dateKey] = true;
+                    }
+                    updateCompletedCount();
+                    saveCrossedDays();
+                });
+                
+                return dayElement;
+            }
+            
             function updateCompletedCount() {
-                completedCountElement.textContent = Object.keys(crossedDays).filter(key => {
-                    const [year, month, day] = key.split('-');
-                    return parseInt(month) === currentMonth && parseInt(year) === currentYear;
-                }).length;
+                completedCountElement.textContent = Object.keys(crossedDays).length;
             }
             
             function saveCrossedDays() {
@@ -182,8 +232,8 @@
                 updateCalendar();
             });
             
-            // Reset button
-            resetButton.addEventListener('click', function() {
+            // Reset buttons
+            resetMonthButton.addEventListener('click', function() {
                 // Remove all crossed days for current month
                 Object.keys(crossedDays).forEach(key => {
                     const [year, month] = key.split('-');
@@ -193,6 +243,14 @@
                 });
                 saveCrossedDays();
                 updateCalendar();
+            });
+            
+            resetAllButton.addEventListener('click', function() {
+                if (confirm("Are you sure you want to reset ALL completed days?")) {
+                    crossedDays = {};
+                    saveCrossedDays();
+                    updateCalendar();
+                }
             });
             
             // Initialize calendar
