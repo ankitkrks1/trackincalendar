@@ -1,228 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Calendar</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .crossed-out {
-            position: relative;
-            color: #ef4444;
-        }
-        .crossed-out::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            width: 100%;
-            height: 2px;
-            background-color: #ef4444;
-            transform: rotate(-45deg);
-            transform-origin: center;
-        }
-        .calendar-day {
-            transition: all 0.2s ease;
-        }
-        .calendar-day:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .other-month-day {
-            opacity: 0.5;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Enhanced Task Tracker — Year Summary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    .crossed-out { position: relative; color: #ef4444; }
+    .crossed-out::after {
+      content: ''; position: absolute; left: 0; top: 50%;
+      width: 100%; height: 2px; background-color: #ef4444;
+      transform: rotate(-45deg); transform-origin: center;
+    }
+    .calendar-day { transition: all 0.14s ease; }
+    .calendar-day:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+    .other-month-day { opacity: 0.45; }
+    .modal-bg { background: rgba(0,0,0,0.45); }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
-        <div class="bg-indigo-600 text-white p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">Task Tracker</h2>
-                <div class="flex space-x-2">
-                    <button id="prev-month" class="p-2 rounded-full hover:bg-indigo-700 transition">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button id="next-month" class="p-2 rounded-full hover:bg-indigo-700 transition">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-            <div id="month-year" class="text-xl font-semibold">June 2023</div>
+
+  <div class="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-indigo-600 text-white p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Task Tracker</h2>
+        <div class="flex space-x-2">
+          <button id="prev-month" class="p-2 rounded-full hover:bg-indigo-700 transition"><i class="fas fa-chevron-left"></i></button>
+          <button id="next-month" class="p-2 rounded-full hover:bg-indigo-700 transition"><i class="fas fa-chevron-right"></i></button>
         </div>
-
-        <div class="p-6">
-            <div class="grid grid-cols-7 gap-2 mb-4">
-                <div class="text-center font-medium text-gray-500">Sun</div>
-                <div class="text-center font-medium text-gray-500">Mon</div>
-                <div class="text-center font-medium text-gray-500">Tue</div>
-                <div class="text-center font-medium text-gray-500">Wed</div>
-                <div class="text-center font-medium text-gray-500">Thu</div>
-                <div class="text-center font-medium text-gray-500">Fri</div>
-                <div class="text-center font-medium text-gray-500">Sat</div>
-            </div>
-
-            <div id="calendar-days" class="grid grid-cols-7 gap-2"></div>
-
-            <div class="mt-6 flex flex-wrap gap-2 justify-between items-center">
-                <div class="text-sm text-gray-600">
-                    <span id="completed-count">0</span> crossed •
-                    <span id="uncrossed-count">0</span> uncrossed
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button id="summary-btn" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition">Summary</button>
-                    <button id="reset-month-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Reset Month</button>
-                    <button id="reset-all-btn" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">Reset All</button>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div id="month-year" class="text-xl font-semibold"></div>
     </div>
 
-    <!-- Summary Modal -->
-    <div id="summary-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white max-w-md w-full rounded-xl p-6">
-            <h2 class="text-xl font-bold mb-4">Year Summary</h2>
-            <p class="mb-2">Crossed Days: <span id="total-crossed"></span></p>
-            <p class="mb-4">Uncrossed Days: <span id="total-uncrossed"></span></p>
-            <button id="close-summary" class="px-4 py-2 bg-gray-200 rounded-lg w-full hover:bg-gray-300">Close</button>
+    <div class="p-6">
+      <div class="grid grid-cols-7 gap-2 mb-4">
+        <div class="text-center font-medium text-gray-500">Sun</div>
+        <div class="text-center font-medium text-gray-500">Mon</div>
+        <div class="text-center font-medium text-gray-500">Tue</div>
+        <div class="text-center font-medium text-gray-500">Wed</div>
+        <div class="text-center font-medium text-gray-500">Thu</div>
+        <div class="text-center font-medium text-gray-500">Fri</div>
+        <div class="text-center font-medium text-gray-500">Sat</div>
+      </div>
+
+      <div id="calendar-days" class="grid grid-cols-7 gap-2"></div>
+
+      <div class="mt-6 text-sm text-gray-700">
+        <div><b>Completed (month):</b> <span id="completed-count">0</span></div>
+        <div><b>Pending (month):</b> <span id="pending-count">0</span></div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap gap-2 justify-between items-center">
+        <div class="flex gap-2">
+          <button id="reset-month-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">Reset Month</button>
+          <button id="reset-all-btn" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">Reset All</button>
+          <button id="summary-btn" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition">Year Summary</button>
         </div>
+
+        <div class="flex gap-2">
+          <button id="export-btn" class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition">Export JSON</button>
+          <input id="import-input" type="file" accept=".json" class="hidden">
+          <button id="import-btn" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition">Import JSON</button>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <!-- Summary Modal (Year) -->
+  <div id="summary-modal" class="fixed inset-0 hidden items-center justify-center modal-bg">
+    <div class="bg-white p-6 rounded-xl shadow-xl max-w-sm w-full">
+      <h2 class="text-xl font-bold mb-3">Year Summary</h2>
+
+      <label class="block text-sm text-gray-600 mb-2">Year</label>
+      <input id="summary-year" type="number" min="1970" max="9999" class="w-full mb-4 p-2 border rounded" />
+
+      <div class="text-gray-800 mb-2"><b>Total Days in Year:</b> <span id="summary-total-days">0</span></div>
+      <div class="text-gray-800 mb-2"><b>Crossed (completed):</b> <span id="summary-total-crossed">0</span></div>
+      <div class="text-gray-800 mb-4"><b>Uncrossed (pending):</b> <span id="summary-total-uncrossed">0</span></div>
+
+      <div class="flex gap-2">
+        <button id="summary-refresh" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Refresh</button>
+        <button id="close-summary" class="flex-1 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Close</button>
+      </div>
+    </div>
+  </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        let currentDate = new Date();
-        let currentMonth = currentDate.getMonth();
-        let currentYear = currentDate.getFullYear();
-        const startOfYear = new Date(currentYear, 0, 1);
+document.addEventListener('DOMContentLoaded', () => {
 
-        const monthYearElement = document.getElementById('month-year');
-        const calendarDaysElement = document.getElementById('calendar-days');
-        const prevMonthButton = document.getElementById('prev-month');
-        const nextMonthButton = document.getElementById('next-month');
-        const resetMonthButton = document.getElementById('reset-month-btn');
-        const resetAllButton = document.getElementById('reset-all-btn');
-        const completedCountElement = document.getElementById('completed-count');
-        const uncrossedCountElement = document.getElementById('uncrossed-count');
-        const summaryBtn = document.getElementById('summary-btn');
-        const summaryModal = document.getElementById('summary-modal');
-        const totalCrossed = document.getElementById('total-crossed');
-        const totalUncrossed = document.getElementById('total-uncrossed');
-        const closeSummary = document.getElementById('close-summary');
+  // State: current month/year shown in calendar
+  let now = new Date();
+  let currentMonth = now.getMonth(); // zero-based
+  let currentYear = now.getFullYear();
 
-        let crossedDays = JSON.parse(localStorage.getItem('crossedDays')) || {};
+  // DOM handles
+  const monthYearEl = document.getElementById('month-year');
+  const calendarDaysEl = document.getElementById('calendar-days');
+  const prevBtn = document.getElementById('prev-month');
+  const nextBtn = document.getElementById('next-month');
 
-        function updateCalendar() {
-            const monthNames = ["January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"];
-            monthYearElement.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  const completedCountEl = document.getElementById('completed-count');
+  const pendingCountEl = document.getElementById('pending-count');
 
-            calendarDaysElement.innerHTML = '';
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const resetMonthBtn = document.getElementById('reset-month-btn');
+  const resetAllBtn = document.getElementById('reset-all-btn');
 
-            for (let i = 0; i < firstDay; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.className = 'calendar-day opacity-0';
-                calendarDaysElement.appendChild(emptyDay);
-            }
+  const exportBtn = document.getElementById('export-btn');
+  const importBtn = document.getElementById('import-btn');
+  const importInput = document.getElementById('import-input');
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayElement = document.createElement('div');
-                dayElement.className = 'calendar-day h-12 flex items-center justify-center rounded-lg cursor-pointer border border-gray-200';
-                dayElement.textContent = day;
+  const summaryBtn = document.getElementById('summary-btn');
+  const summaryModal = document.getElementById('summary-modal');
+  const summaryYearInput = document.getElementById('summary-year');
+  const summaryTotalDaysEl = document.getElementById('summary-total-days');
+  const summaryCrossedEl = document.getElementById('summary-total-crossed');
+  const summaryUncrossedEl = document.getElementById('summary-total-uncrossed');
+  const summaryRefreshBtn = document.getElementById('summary-refresh');
+  const closeSummaryBtn = document.getElementById('close-summary');
 
-                const dateKey = `${currentYear}-${currentMonth + 1}-${day}`;
+  // Data store - normalized keys YYYY-MM-DD
+  let crossedDays = JSON.parse(localStorage.getItem('crossedDays')) || {};
 
-                if (crossedDays[dateKey]) dayElement.classList.add('crossed-out');
+  // Utilities: normalize and key helpers
+  function pad(n){ return String(n).padStart(2,'0'); }
 
-                dayElement.addEventListener('click', function() {
-                    if (dayElement.classList.contains('crossed-out')) {
-                        dayElement.classList.remove('crossed-out');
-                        delete crossedDays[dateKey];
-                    } else {
-                        dayElement.classList.add('crossed-out');
-                        crossedDays[dateKey] = true;
-                    }
-                    saveCrossedDays();
-                    updateCounts();
-                });
+  // Build normalized key from year, zero-based month, day
+  function makeKey(y, monthZeroBased, d){
+    return `${y}-${pad(monthZeroBased + 1)}-${pad(d)}`;
+  }
 
-                calendarDaysElement.appendChild(dayElement);
-            }
+  // Accept a variety of legacy keys like "2025-1-5" or "2025-01-05"
+  function parseLegacyKey(k){
+    const parts = k.split('-').map(p => p.trim());
+    if (parts.length !== 3) throw new Error('Bad key');
+    const y = parseInt(parts[0],10);
+    const m = parseInt(parts[1],10) - 1; // to zero-based
+    const d = parseInt(parts[2],10);
+    if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) throw new Error('Bad key parts');
+    return { y, m, d };
+  }
 
-            updateCounts();
-        }
-
-        function updateCounts() {
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            let crossed = 0;
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const key = `${currentYear}-${currentMonth + 1}-${day}`;
-                if (crossedDays[key]) crossed++;
-            }
-
-            completedCountElement.textContent = crossed;
-            uncrossedCountElement.textContent = daysInMonth - crossed;
-        }
-
-        function saveCrossedDays() {
-            localStorage.setItem('crossedDays', JSON.stringify(crossedDays));
-        }
-
-        function calculateYearSummary() {
-            let crossed = 0, uncrossed = 0;
-            const today = new Date();
-
-            for (let d = new Date(startOfYear); d <= today; d.setDate(d.getDate() + 1)) {
-                const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-                if (crossedDays[key]) crossed++; else uncrossed++;
-            }
-
-            totalCrossed.textContent = crossed;
-            totalUncrossed.textContent = uncrossed;
-        }
-
-        prevMonthButton.addEventListener('click', function() {
-            currentMonth--;
-            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-            updateCalendar();
-        });
-
-        nextMonthButton.addEventListener('click', function() {
-            currentMonth++;
-            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-            updateCalendar();
-        });
-
-        resetMonthButton.addEventListener('click', function() {
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            for (let day = 1; day <= daysInMonth; day++) {
-                const key = `${currentYear}-${currentMonth + 1}-${day}`;
-                delete crossedDays[key];
-            }
-            saveCrossedDays();
-            updateCalendar();
-        });
-
-        resetAllButton.addEventListener('click', function() {
-            if (confirm("Reset ALL data?")) {
-                crossedDays = {};
-                saveCrossedDays();
-                updateCalendar();
-            }
-        });
-
-        summaryBtn.addEventListener('click', function() {
-            calculateYearSummary();
-            summaryModal.classList.remove('hidden');
-        });
-
-        closeSummary.addEventListener('click', function() {
-            summaryModal.classList.add('hidden');
-        });
-
-        updateCalendar();
+  // Normalize any existing keys to YYYY-MM-DD
+  function normalizeStoredKeys(){
+    const newObj = {};
+    Object.keys(crossedDays).forEach(k => {
+      try {
+        const { y, m, d } = parseLegacyKey(k);
+        newObj[ makeKey(y, m, d) ] = true;
+      } catch(e){
+        // skip invalid entries
+      }
     });
+    crossedDays = newObj;
+    saveData();
+  }
+
+  // Save to localStorage
+  function saveData(){
+    localStorage.setItem('crossedDays', JSON.stringify(crossedDays));
+  }
+
+  // Render calendar for currentMonth/currentYear
+  function renderCalendar(){
+    const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    monthYearEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+    calendarDaysEl.innerHTML = '';
+
+    const firstWeekday = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const daysInPrev = new Date(currentYear, currentMonth, 0).getDate();
+
+    // previous-month padding
+    for (let i = firstWeekday - 1; i >= 0; i--){
+      const day = daysInPrev - i;
+      const el = makeDayElement(day, true);
+      calendarDaysEl.appendChild(el);
+    }
+
+    // actual days
+    for (let d = 1; d <= daysInMonth; d++){
+      const el = makeDayElement(d, false);
+      // highlight today
+      const t = new Date();
+      if (t.getFullYear() === currentYear && t.getMonth() === currentMonth && t.getDate() === d){
+        el.classList.add('bg-blue-100','border-blue-300');
+      }
+      calendarDaysEl.appendChild(el);
+    }
+
+    // next-month padding so grid is full
+    const totalCells = Math.ceil((firstWeekday + daysInMonth)/7) * 7;
+    const nextPadding = totalCells - (firstWeekday + daysInMonth);
+    for (let d = 1; d <= nextPadding; d++){
+      const el = makeDayElement(d, true);
+      calendarDaysEl.appendChild(el);
+    }
+
+    updateMonthStats();
+  }
+
+  // Create single day cell. isOtherMonth true => shows other-month style
+  function makeDayElement(day, isOtherMonth){
+    const el = document.createElement('div');
+    el.className = 'calendar-day h-12 flex items-center justify-center rounded-lg cursor-pointer border border-gray-200';
+    if (isOtherMonth) el.classList.add('other-month-day');
+    el.textContent = day;
+
+    // compute real Y/M/D for the cell
+    let y = currentYear, m = currentMonth, d = day;
+    if (isOtherMonth){
+      // heuristic: days > 20 are previous-month padding, days <= 14 are next-month padding
+      if (day > 20){ m = currentMonth - 1; if (m < 0){ m = 11; y = currentYear - 1; } }
+      else { m = currentMonth + 1; if (m > 11){ m = 0; y = currentYear + 1; } }
+    }
+    const key = makeKey(y, m, d);
+
+    if (crossedDays[key]) el.classList.add('crossed-out');
+
+    el.addEventListener('click', () => {
+      if (el.classList.contains('crossed-out')){
+        el.classList.remove('crossed-out');
+        delete crossedDays[key];
+      } else {
+        el.classList.add('crossed-out');
+        crossedDays[key] = true;
+      }
+      saveData();
+      updateMonthStats();
+    });
+
+    return el;
+  }
+
+  // Update month counts (completed/pending)
+  function updateMonthStats(){
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let crossed = 0;
+    for (let d = 1; d <= daysInMonth; d++){
+      const key = makeKey(currentYear, currentMonth, d);
+      if (crossedDays[key]) crossed++;
+    }
+    completedCountEl.textContent = crossed;
+    pendingCountEl.textContent = (daysInMonth - crossed);
+  }
+
+  // Reset only current month
+  function resetMonth(){
+    const keys = Object.keys(crossedDays);
+    keys.forEach(k => {
+      try {
+        const { y, m, d } = parseLegacyKey(k);
+        if (y === currentYear && m === currentMonth) delete crossedDays[k];
+      } catch(e){
+        // ignore malformed
+      }
+    });
+    // Also handle normalized keys directly
+    Object.keys(crossedDays).forEach(k => {
+      const parts = k.split('-');
+      if (parts.length === 3){
+        const y = parseInt(parts[0],10);
+        const m = parseInt(parts[1],10) - 1;
+        if (y === currentYear && m === currentMonth) delete crossedDays[k];
+      }
+    });
+    saveData();
+    renderCalendar();
+  }
+
+  // Reset all data
+  function resetAll(){
+    if (!confirm('Reset ALL stored crossed days?')) return;
+    crossedDays = {};
+    saveData();
+    renderCalendar();
+  }
+
+  // Export JSON file (current local structure)
+  function exportJSON(){
+    const blob = new Blob([JSON.stringify(crossedDays, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const today = new Date();
+    a.download = `crossedDays-${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Import JSON file (then normalize and re-render)
+  function importJSONFile(file){
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (typeof data !== 'object' || data === null) throw new Error('Invalid JSON');
+        crossedDays = data;
+        normalizeStoredKeys();
+        saveData();
+        renderCalendar();
+        alert('Import successful');
+      } catch(err){
+        alert('Import error: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // === Year Summary: full year Jan 1 -> Dec 31
+  function computeYearSummary(year){
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31); // inclusive
+    let cur = new Date(start);
+    let crossed = 0;
+    let total = 0;
+    while (cur <= end){
+      const key = makeKey(cur.getFullYear(), cur.getMonth(), cur.getDate());
+      if (crossedDays[key]) crossed++;
+      total++;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return { year, totalDays: total, crossed, uncrossed: total - crossed };
+  }
+
+  // Initialize: normalize existing store and render
+  normalizeStoredKeys();
+  renderCalendar();
+
+  // Wire events
+  prevBtn.addEventListener('click', () => { currentMonth--; if (currentMonth < 0){ currentMonth = 11; currentYear--; } renderCalendar(); });
+  nextBtn.addEventListener('click', () => { currentMonth++; if (currentMonth > 11){ currentMonth = 0; currentYear++; } renderCalendar(); });
+
+  resetMonthBtn.addEventListener('click', resetMonth);
+  resetAllBtn.addEventListener('click', resetAll);
+
+  exportBtn.addEventListener('click', exportJSON);
+  importBtn.addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', e => importJSONFile(e.target.files[0]));
+
+  // Summary modal: default to currentYear
+  summaryBtn.addEventListener('click', () => {
+    summaryYearInput.value = new Date().getFullYear();
+    refreshSummary();
+    summaryModal.classList.remove('hidden');
+    summaryModal.classList.add('flex');
+  });
+
+  summaryRefreshBtn.addEventListener('click', refreshSummary);
+  closeSummaryBtn.addEventListener('click', () => {
+    summaryModal.classList.add('hidden');
+    summaryModal.classList.remove('flex');
+  });
+
+  // Recompute and show summary for entered year
+  function refreshSummary(){
+    let y = parseInt(summaryYearInput.value, 10);
+    if (Number.isNaN(y)) y = new Date().getFullYear();
+    const res = computeYearSummary(y);
+    summaryYearInput.value = res.year;
+    summaryTotalDaysEl.textContent = res.totalDays;
+    summaryCrossedEl.textContent = res.crossed;
+    summaryUncrossedEl.textContent = res.uncrossed;
+  }
+
+  // expose helpers (small safety)
+  window._debug_crossedDays = crossedDays;
+});
 </script>
+
 </body>
 </html>
